@@ -31,7 +31,7 @@ class AddProductActivity : AppCompatActivity() {
             var description : String = addProductBinding.editTextDescription.text.toString()
 
             var id = ref.push().key.toString()
-            var data = ProductModel(name, price, description)
+            var data = ProductModel(id, name, price, description)
             ref.child(id).setValue(data).addOnCompleteListener {
                 if (it.isSuccessful) {
                     Toast.makeText(applicationContext, "Data Saved", Toast.LENGTH_LONG).show()

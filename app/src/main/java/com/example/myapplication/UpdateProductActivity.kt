@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -36,6 +37,21 @@ class UpdateProductActivity : AppCompatActivity() {
             var updatedName : String = updateProductBinding.updateName.text.toString()
             var updatedPrice : Int = updateProductBinding.updatePrice.text.toString().toInt()
             var updatedDescription : String = updateProductBinding.updateDescription.text.toString()
+
+            var updatedMap = mutableMapOf<String, Any>()
+            updatedMap["name"] = updatedName
+            updatedMap["price"] = updatedPrice
+            updatedMap["description"] = updatedDescription
+            updatedMap["id"] = id
+
+            ref.child(id).updateChildren(updatedMap).addOnCompleteListener {
+                if (it.isSuccessful) {
+                    Toast.makeText(applicationContext, "Data Updated", Toast.LENGTH_LONG).show()
+                    finish()
+                } else {
+                    Toast.makeText(applicationContext,it.exception?.message,Toast.LENGTH_LONG).show()
+                }
+            }
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
