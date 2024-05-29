@@ -4,11 +4,13 @@ import android.os.Parcel
 import android.os.Parcelable
 
 data class ProductModel(
+    var id : String = "",
     var name : String = "",
     var price : Int = 0,
     var description : String = ""
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
         parcel.readString() ?: "",
         parcel.readInt(),
         parcel.readString() ?: ""
@@ -16,6 +18,7 @@ data class ProductModel(
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(id)
         parcel.writeString(name)
         parcel.writeInt(price)
         parcel.writeString(description)
@@ -34,4 +37,5 @@ data class ProductModel(
             return arrayOfNulls(size)
         }
     }
+
 }
