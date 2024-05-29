@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
+import com.example.myapplication.UpdateProductActivity
 import com.example.myapplication.model.ProductModel
 
 class ProductAdapter(var context: Context, var data: ArrayList<ProductModel>) : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
@@ -34,7 +35,9 @@ class ProductAdapter(var context: Context, var data: ArrayList<ProductModel>) : 
         holder.productDescription.text = data[position].description
 
         holder.btnEdit.setOnClickListener {
-            var intent = Intent()
+            var intent = Intent(context, UpdateProductActivity::class.java)
+            intent.putExtra("product", data[position])
+            context.startActivity(intent)
         }
     }
 }
