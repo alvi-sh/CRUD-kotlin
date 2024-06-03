@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
 
                         data.add(product)
                     }
-
+                    
                     var adapter = ProductAdapter(this@MainActivity, data)
                     mainBinding.recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
                     mainBinding.recyclerView.adapter = adapter
