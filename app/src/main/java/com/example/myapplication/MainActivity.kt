@@ -4,11 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.adapter.ProductAdapter
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.model.ProductModel
@@ -21,11 +24,12 @@ import com.google.firebase.database.ValueEventListener
 class MainActivity : AppCompatActivity() {
 
     lateinit var mainBinding: ActivityMainBinding
+    lateinit var productAdapter: ProductAdapter
 
     var firebaseDatabase: FirebaseDatabase = FirebaseDatabase.getInstance()
     var ref: DatabaseReference = firebaseDatabase.reference.child("products")
 
-    var productList = ArrayList<ProductModel>()
+    var data = ArrayList<ProductModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,9 +38,33 @@ class MainActivity : AppCompatActivity() {
         mainBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(mainBinding.root)
 
+        productAdapter = ProductAdapter(this@MainActivity, data)
+
+        ItemTouchHelper(object:ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                TODO("Not yet implemented")
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                var id = productAdapter.getProductId(viewHolder.adapterPosition)
+
+                ref.child(id).removeValue().addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        Toast.makeText(applicationContext, "Data deleted", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(applicationContext,it.exception?.message, Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }).attachToRecyclerView(mainBinding.recyclerView)
+
         ref.addValueEventListener(object: ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                productList.clear()
+                data.clear()
 
                 for (eachData in snapshot.children) {
                     var product = eachData.getValue(ProductModel::class.java)
@@ -45,10 +73,10 @@ class MainActivity : AppCompatActivity() {
                         Log.d("my data", product.price.toString())
                         Log.d("my data", product.description)
 
-                        productList.add(product)
+                        data.add(product)
                     }
 
-                    var adapter = ProductAdapter(this@MainActivity, productList)
+                    var adapter = ProductAdapter(this@MainActivity, data)
                     mainBinding.recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
                     mainBinding.recyclerView.adapter = adapter
                 }

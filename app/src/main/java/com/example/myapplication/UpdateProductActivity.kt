@@ -28,8 +28,8 @@ class UpdateProductActivity : AppCompatActivity() {
         var product: ProductModel? = intent.getParcelableExtra("product")
 
         updateProductBinding.updateName.setText(product?.name)
-        updateProductBinding.updateName.setText(product?.price.toString())
-        updateProductBinding.updateName.setText(product?.description)
+        updateProductBinding.updatePrice.setText(product?.price.toString())
+        updateProductBinding.updateDescription.setText(product?.description)
 
         id = product?.id.toString()
 
