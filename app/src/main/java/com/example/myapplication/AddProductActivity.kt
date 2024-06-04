@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,7 +33,7 @@ class AddProductActivity : AppCompatActivity() {
     private var imageUri: Uri? = null
 
     private val firebaseStorage: FirebaseStorage = FirebaseStorage.getInstance()
-    private val storageRef = firebaseStorage.reference
+    private val storageReference = firebaseStorage.reference
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -51,6 +52,7 @@ class AddProductActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         addProductBinding = ActivityAddProductBinding.inflate(layoutInflater)
         setContentView(addProductBinding.root)
@@ -123,7 +125,7 @@ class AddProductActivity : AppCompatActivity() {
 
     private fun uploadPhoto() {
         val imageName = UUID.randomUUID().toString()
-        val imageReference = storageRef.child("products").child(imageName)
+        val imageReference = storageReference.child("products").child(imageName)
 
         imageUri?.let { url ->
             imageReference.putFile(url).addOnSuccessListener {
