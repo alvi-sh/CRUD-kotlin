@@ -8,13 +8,20 @@
     android:orientation="vertical"
     tools:context=".UpdateProductActivity">
 
+    <ImageView
+        android:id="@+id/updateImageView"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        app:srcCompat="@drawable/baseline_add_photo_alternate_24" />
+
     <EditText
         android:id="@+id/updateName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:inputType="text"
-        android:hint="Product Name" />
+        android:hint="Product Name"
+        android:inputType="text" />
 
     <EditText
         android:id="@+id/updatePrice"
