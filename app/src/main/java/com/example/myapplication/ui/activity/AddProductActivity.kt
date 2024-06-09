@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.ui.activity
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -15,27 +15,27 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.myapplication.databinding.ActivityUpdateProductBinding
+import com.example.myapplication.R
+import com.example.myapplication.databinding.ActivityAddProductBinding
 import com.example.myapplication.model.ProductModel
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import com.squareup.picasso.Picasso
 import java.util.UUID
 
-class UpdateProductActivity : AppCompatActivity() {
+class AddProductActivity : AppCompatActivity() {
 
-    lateinit var updateProductBinding: ActivityUpdateProductBinding
-    var firebaseDatabase : FirebaseDatabase = FirebaseDatabase.getInstance()
-    var ref : DatabaseReference = firebaseDatabase.reference.child("products")
-    var id = ""
-    var imageName = ""
+    lateinit var addProductBinding: ActivityAddProductBinding
+    var firebaseDatabase: FirebaseDatabase = FirebaseDatabase.getInstance()
+    var ref: DatabaseReference = firebaseDatabase.reference.child("products")
 
     lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     var imageUri: Uri? = null
 
     var firebaseStorage: FirebaseStorage = FirebaseStorage.getInstance()
-    var storageReference = firebaseStorage.reference
+    var storageReference: StorageReference = firebaseStorage.reference
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -56,12 +56,12 @@ class UpdateProductActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        updateProductBinding = ActivityUpdateProductBinding.inflate(layoutInflater)
-        setContentView(updateProductBinding.root)
+        addProductBinding = ActivityAddProductBinding.inflate(layoutInflater)
+        setContentView(addProductBinding.root)
 
         registerActivityForResult()
 
-        updateProductBinding.updateImageView.setOnClickListener {
+        addProductBinding.imageBrowse.setOnClickListener {
             var permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 android.Manifest.permission.READ_MEDIA_IMAGES
             } else {
@@ -77,34 +77,11 @@ class UpdateProductActivity : AppCompatActivity() {
             }
         }
 
-        var product: ProductModel? = intent.getParcelableExtra("product")
-
-        updateProductBinding.updateName.setText(product?.name)
-        updateProductBinding.updatePrice.setText(product?.price.toString())
-        updateProductBinding.updateDescription.setText(product?.description)
-
-        Picasso.get().load(product?.url).into(updateProductBinding.updateImageView)
-
-        id = product?.id.toString()
-        imageName = product?.imageName.toString()
-
-        updateProductBinding.updateButton.setOnClickListener {
-            uploadPhoto()
-        }
-
-        updateProductBinding.updateImageView.setOnClickListener {
-            var permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                android.Manifest.permission.READ_MEDIA_IMAGES
+        addProductBinding.saveButton.setOnClickListener {
+            if (imageUri != null) {
+                uploadPhoto()
             } else {
-                android.Manifest.permission.READ_EXTERNAL_STORAGE
-            }
-            if (ContextCompat.checkSelfPermission(this, permissions) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(permissions), 1)
-            } else {
-                var intent = Intent()
-                intent.type = "image/*"
-                intent.action = Intent.ACTION_GET_CONTENT
-                activityResultLauncher.launch(intent)
+                Toast.makeText(this, "Please select an image first", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -112,6 +89,23 @@ class UpdateProductActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+    }
+
+    private fun addProducts(url: String, imageName : String) {
+        var name: String = addProductBinding.editTextName.text.toString()
+        var price: Int = addProductBinding.editTextPrice.text.toString().toInt()
+        var description: String = addProductBinding.editTextDescription.text.toString()
+
+        var id = ref.push().key.toString()
+        var data = ProductModel(id, name, price, description, url, imageName)
+        ref.child(id).setValue(data).addOnCompleteListener {
+            if (it.isSuccessful) {
+                Toast.makeText(applicationContext, "Data Saved", Toast.LENGTH_LONG).show()
+                finish()
+            } else {
+                Toast.makeText(applicationContext, it.exception?.message, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -125,13 +119,14 @@ class UpdateProductActivity : AppCompatActivity() {
                 if (resultCode == RESULT_OK && imageData != null) {
                     imageUri = imageData.data
                     imageUri?.let {
-                        Picasso.get().load(it).into(updateProductBinding.updateImageView)
+                        Picasso.get().load(it).into(addProductBinding.imageBrowse)
                     }
                 }
             })
     }
 
     private fun uploadPhoto() {
+        var imageName = UUID.randomUUID().toString()
         var imageReference = storageReference.child("products").child(imageName)
 
         imageUri?.let { url ->
@@ -140,32 +135,10 @@ class UpdateProductActivity : AppCompatActivity() {
 
                 imageReference.downloadUrl.addOnSuccessListener { url ->
                     var imageUrl = url.toString()
-                    updateProduct(imageUrl)
+                    addProducts(imageUrl, imageName)
                 }
             }.addOnFailureListener {
                 Toast.makeText(applicationContext, it.localizedMessage, Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    fun updateProduct(url : String) {
-        var updatedName : String = updateProductBinding.updateName.text.toString()
-        var updatedPrice : Int = updateProductBinding.updatePrice.text.toString().toInt()
-        var updatedDescription : String = updateProductBinding.updateDescription.text.toString()
-
-        var updatedMap = mutableMapOf<String, Any>()
-        updatedMap["name"] = updatedName
-        updatedMap["price"] = updatedPrice
-        updatedMap["description"] = updatedDescription
-        updatedMap["id"] = id
-        updatedMap["url"] = url
-
-        ref.child(id).updateChildren(updatedMap).addOnCompleteListener {
-            if (it.isSuccessful) {
-                Toast.makeText(applicationContext, "Data Updated", Toast.LENGTH_LONG).show()
-                finish()
-            } else {
-                Toast.makeText(applicationContext,it.exception?.message,Toast.LENGTH_LONG).show()
             }
         }
     }

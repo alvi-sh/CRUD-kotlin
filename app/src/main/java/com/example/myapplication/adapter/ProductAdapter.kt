@@ -10,7 +10,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
-import com.example.myapplication.UpdateProductActivity
+import com.example.myapplication.ui.activity.UpdateProductActivity
 import com.example.myapplication.model.ProductModel
 import com.squareup.picasso.Callback
 import com.squareup.picasso.Picasso

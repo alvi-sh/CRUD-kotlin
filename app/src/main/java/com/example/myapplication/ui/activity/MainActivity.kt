@@ -1,9 +1,8 @@
-package com.example.myapplication
+package com.example.myapplication.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -12,6 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.R
 import com.example.myapplication.adapter.ProductAdapter
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.model.ProductModel
