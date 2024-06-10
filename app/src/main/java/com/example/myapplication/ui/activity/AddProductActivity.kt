@@ -18,6 +18,10 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.myapplication.R
 import com.example.myapplication.databinding.ActivityAddProductBinding
 import com.example.myapplication.model.ProductModel
+import com.example.myapplication.repository.ProductRepository
+import com.example.myapplication.repository.ProductRepositoryImpl
+import com.example.myapplication.utils.ImageUtils
+import com.example.myapplication.viewmodel.ProductViewModel
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
@@ -28,14 +32,12 @@ import java.util.UUID
 class AddProductActivity : AppCompatActivity() {
 
     lateinit var addProductBinding: ActivityAddProductBinding
-    var firebaseDatabase: FirebaseDatabase = FirebaseDatabase.getInstance()
-    var ref: DatabaseReference = firebaseDatabase.reference.child("products")
 
     lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     var imageUri: Uri? = null
 
-    var firebaseStorage: FirebaseStorage = FirebaseStorage.getInstance()
-    var storageReference: StorageReference = firebaseStorage.reference
+    lateinit var imageUtils: ImageUtils
+    lateinit var productViewModel: ProductViewModel
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -59,22 +61,21 @@ class AddProductActivity : AppCompatActivity() {
         addProductBinding = ActivityAddProductBinding.inflate(layoutInflater)
         setContentView(addProductBinding.root)
 
-        registerActivityForResult()
+        imageUtils = ImageUtils(this)
+        imageUtils.registerActivity {url ->
+            url.let {
+                imageUri = it
+                Picasso.get().load(it).into(addProductBinding.imageBrowse)
+            }
+        }
+
+        var repo = ProductRepositoryImpl()
+        productViewModel = ProductViewModel(repo)
+
+
 
         addProductBinding.imageBrowse.setOnClickListener {
-            var permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                android.Manifest.permission.READ_MEDIA_IMAGES
-            } else {
-                android.Manifest.permission.READ_EXTERNAL_STORAGE
-            }
-            if (ContextCompat.checkSelfPermission(this, permissions) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(permissions), 1)
-            } else {
-                var intent = Intent()
-                intent.type = "image/*"
-                intent.action = Intent.ACTION_GET_CONTENT
-                activityResultLauncher.launch(intent)
-            }
+            imageUtils.launchGallery(this)
         }
 
         addProductBinding.saveButton.setOnClickListener {
@@ -92,53 +93,31 @@ class AddProductActivity : AppCompatActivity() {
         }
     }
 
-    private fun addProducts(url: String, imageName : String) {
+    private fun addProducts(url: String?, imageName : String?) {
         var name: String = addProductBinding.editTextName.text.toString()
         var price: Int = addProductBinding.editTextPrice.text.toString().toInt()
         var description: String = addProductBinding.editTextDescription.text.toString()
 
-        var id = ref.push().key.toString()
-        var data = ProductModel(id, name, price, description, url, imageName)
-        ref.child(id).setValue(data).addOnCompleteListener {
-            if (it.isSuccessful) {
-                Toast.makeText(applicationContext, "Data Saved", Toast.LENGTH_LONG).show()
+        var data = ProductModel("", name, price, description, url.toString(), imageName.toString())
+        productViewModel.addProducts(data) {
+            success, message ->
+            if (success) {
                 finish()
+                Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
             } else {
-                Toast.makeText(applicationContext, it.exception?.message, Toast.LENGTH_LONG).show()
+                Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    private fun registerActivityForResult() {
-        activityResultLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-            ActivityResultCallback { result ->
-
-                var resultCode = result.resultCode
-                var imageData = result.data
-                if (resultCode == RESULT_OK && imageData != null) {
-                    imageUri = imageData.data
-                    imageUri?.let {
-                        Picasso.get().load(it).into(addProductBinding.imageBrowse)
-                    }
-                }
-            })
-    }
-
     private fun uploadPhoto() {
-        var imageName = UUID.randomUUID().toString()
-        var imageReference = storageReference.child("products").child(imageName)
-
-        imageUri?.let { url ->
-            imageReference.putFile(url).addOnSuccessListener {
-                Toast.makeText(applicationContext, "Image Uploaded", Toast.LENGTH_LONG).show()
-
-                imageReference.downloadUrl.addOnSuccessListener { url ->
-                    var imageUrl = url.toString()
+        imageUri?.let {
+            productViewModel.uploadImages(it) { success, imageName, imageUrl ->
+                if (success) {
                     addProducts(imageUrl, imageName)
+                } else {
+
                 }
-            }.addOnFailureListener {
-                Toast.makeText(applicationContext, it.localizedMessage, Toast.LENGTH_LONG).show()
             }
         }
     }

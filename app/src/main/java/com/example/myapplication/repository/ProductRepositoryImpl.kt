@@ -32,7 +32,7 @@ class ProductRepositoryImpl : ProductRepository {
         var imageName = UUID.randomUUID().toString()
         var imageReference = storageReference.child("products").child(imageName)
 
-        imageUri?.let { url ->
+        imageUri.let { url ->
             imageReference.putFile(url).addOnSuccessListener {
 
                 imageReference.downloadUrl.addOnSuccessListener { url ->
