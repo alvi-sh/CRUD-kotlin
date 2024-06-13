@@ -6,7 +6,7 @@ import com.squareup.picasso.Callback
 
 interface ProductRepository {
     fun addProducts(productModel: ProductModel, callback: (Boolean, String?) -> Unit)
-    fun uploadImages(imageUri: Uri, callback: (Boolean, String?, String?) -> Unit)
+    fun uploadImages(imageName: String, imageUri: Uri, callback: (Boolean, String?) -> Unit)
 
     fun getAllProduct(callback: (List<ProductModel>?, Boolean, String?) -> Unit)
 

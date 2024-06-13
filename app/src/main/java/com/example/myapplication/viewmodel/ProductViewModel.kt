@@ -9,9 +9,13 @@ import com.example.myapplication.repository.ProductRepository
 
 class ProductViewModel(val repository: ProductRepository) : ViewModel() {
 
-    fun uploadImages(imageUri: Uri, callback: (Boolean, String?, String?) -> Unit) {
-        repository.uploadImages(imageUri) { success, imageUrl, imageName ->
-            callback(success, imageUrl, imageName)
+    fun updateProducts(id: String, data: MutableMap<String, Any>?, callback: (Boolean, String?) -> Unit) {
+        repository.updateProducts(id, data, callback)
+    }
+
+    fun uploadImages(imageName: String, imageUri: Uri, callback: (Boolean, String?) -> Unit) {
+        repository.uploadImages(imageName, imageUri) { success, imageUrl ->
+            callback(success, imageUrl)
         }
     }
 

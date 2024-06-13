@@ -18,24 +18,26 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.myapplication.R
 import com.example.myapplication.databinding.ActivityUpdateProductBinding
 import com.example.myapplication.model.ProductModel
+import com.example.myapplication.repository.ProductRepositoryImpl
+import com.example.myapplication.utils.ImageUtils
+import com.example.myapplication.viewmodel.ProductViewModel
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
+import java.util.UUID
 
 class UpdateProductActivity : AppCompatActivity() {
 
     lateinit var updateProductBinding: ActivityUpdateProductBinding
-    var firebaseDatabase : FirebaseDatabase = FirebaseDatabase.getInstance()
-    var ref : DatabaseReference = firebaseDatabase.reference.child("products")
     var id = ""
     var imageName = ""
 
+    lateinit var imageUtils: ImageUtils
+    lateinit var productViewModel: ProductViewModel
+
     lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     var imageUri: Uri? = null
-
-    var firebaseStorage: FirebaseStorage = FirebaseStorage.getInstance()
-    var storageReference = firebaseStorage.reference
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -59,22 +61,18 @@ class UpdateProductActivity : AppCompatActivity() {
         updateProductBinding = ActivityUpdateProductBinding.inflate(layoutInflater)
         setContentView(updateProductBinding.root)
 
-        registerActivityForResult()
+        imageUtils = ImageUtils(this)
+
+        var repo = ProductRepositoryImpl()
+        productViewModel = ProductViewModel(repo)
+
+        imageUtils.registerActivity { url ->
+            imageUri = url
+            Picasso.get().load(imageUri).into(updateProductBinding.updateImageView)
+        }
 
         updateProductBinding.updateImageView.setOnClickListener {
-            var permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                android.Manifest.permission.READ_MEDIA_IMAGES
-            } else {
-                android.Manifest.permission.READ_EXTERNAL_STORAGE
-            }
-            if (ContextCompat.checkSelfPermission(this, permissions) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(permissions), 1)
-            } else {
-                var intent = Intent()
-                intent.type = "image/*"
-                intent.action = Intent.ACTION_GET_CONTENT
-                activityResultLauncher.launch(intent)
-            }
+            imageUtils.launchGallery(this)
         }
 
         var product: ProductModel? = intent.getParcelableExtra("product")
@@ -136,18 +134,13 @@ class UpdateProductActivity : AppCompatActivity() {
     }
 
     private fun uploadPhoto() {
-        var imageReference = storageReference.child("products").child(imageName)
+        imageUri?.let {
+            productViewModel.uploadImages(imageName, it) { success, imageUrl ->
+                if (success) {
+                    updateProduct(imageUrl.toString())
+                } else {
 
-        imageUri?.let { url ->
-            imageReference.putFile(url).addOnSuccessListener {
-                Toast.makeText(applicationContext, "Image Uploaded", Toast.LENGTH_LONG).show()
-
-                imageReference.downloadUrl.addOnSuccessListener { url ->
-                    var imageUrl = url.toString()
-                    updateProduct(imageUrl)
                 }
-            }.addOnFailureListener {
-                Toast.makeText(applicationContext, it.localizedMessage, Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -164,12 +157,12 @@ class UpdateProductActivity : AppCompatActivity() {
         updatedMap["id"] = id
         updatedMap["url"] = url
 
-        ref.child(id).updateChildren(updatedMap).addOnCompleteListener {
-            if (it.isSuccessful) {
-                Toast.makeText(applicationContext, "Data Updated", Toast.LENGTH_LONG).show()
-                finish()
+        productViewModel.updateProducts(id, updatedMap) {
+            success, message ->
+            if (success) {
+                Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(applicationContext,it.exception?.message,Toast.LENGTH_LONG).show()
+                Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
             }
         }
     }

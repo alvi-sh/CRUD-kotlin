@@ -3,6 +3,7 @@ package com.example.myapplication.ui.activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +16,7 @@ import com.example.myapplication.R
 import com.example.myapplication.adapter.ProductAdapter
 import com.example.myapplication.databinding.ActivityMainBinding
 import com.example.myapplication.model.ProductModel
+import com.example.myapplication.repository.ProductRepositoryImpl
 import com.example.myapplication.viewmodel.ProductViewModel
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -39,61 +41,41 @@ class MainActivity : AppCompatActivity() {
 
         productAdapter = ProductAdapter(this@MainActivity, ArrayList())
 
+        var repo = ProductRepositoryImpl()
+        productViewModel = ProductViewModel(repo)
         productViewModel.fetchAllProducts()
 
         productViewModel.productList.observe(this) {
-
+            it?.let { products -> productAdapter.updateData(products) }
         }
 
-//        ItemTouchHelper(object:ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-//            override fun onMove(
-//                recyclerView: RecyclerView,
-//                viewHolder: RecyclerView.ViewHolder,
-//                target: RecyclerView.ViewHolder
-//            ): Boolean {
-//                TODO("Not yet implemented")
-//            }
-//
-//            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-//                var id = productAdapter.getProductId(viewHolder.adapterPosition)
-//                var imageName = productAdapter.getImageName(viewHolder.adapterPosition)
-//
-//                ref.child(id).removeValue().addOnCompleteListener {
-//                    if (it.isSuccessful) {
-//                        storageReference.child("products").child(imageName).delete()
-//                        Toast.makeText(applicationContext, "Data deleted", Toast.LENGTH_LONG).show()
-//                    } else {
-//                        Toast.makeText(applicationContext,it.exception?.message, Toast.LENGTH_LONG).show()
-//                    }
-//                }
-//            }
-//        }).attachToRecyclerView(mainBinding.recyclerView)
+        productViewModel.loadingState.observe(this) {loadingState ->
+            if (loadingState) {
+                mainBinding.progressMain.visibility = View.VISIBLE
+            } else {
+                mainBinding.progressMain.visibility = View.GONE
+            }
+        }
 
-//        ref.addValueEventListener(object: ValueEventListener {
-//            override fun onDataChange(snapshot: DataSnapshot) {
-//                data.clear()
-//
-//                for (eachData in snapshot.children) {
-//                    var product = eachData.getValue(ProductModel::class.java)
-//                    if (product != null) {
-//                        Log.d("my data", product.name)
-//                        Log.d("my data", product.price.toString())
-//                        Log.d("my data", product.description)
-//
-//                        data.add(product)
-//                    }
-//
-//                    var adapter = ProductAdapter(this@MainActivity, data)
-//                    mainBinding.recyclerView.layoutManager = LinearLayoutManager(this@MainActivity)
-//                    mainBinding.recyclerView.adapter = adapter
-//                }
-//            }
-//
-//            override fun onCancelled(error: DatabaseError) {
-//                TODO("Not yet implemented")
-//            }
-//
-//        })
+        mainBinding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = productAdapter
+        }
+
+        ItemTouchHelper(object:ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                TODO("Not yet implemented")
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                var id = productAdapter.getProductId(viewHolder.adapterPosition)
+                var imageName = productAdapter.getImageName(viewHolder.adapterPosition)
+            }
+        }).attachToRecyclerView(mainBinding.recyclerView)
 
         mainBinding.floatingActionButton.setOnClickListener {
             var intent = Intent(this@MainActivity, AddProductActivity::class.java)

@@ -111,12 +111,12 @@ class AddProductActivity : AppCompatActivity() {
     }
 
     private fun uploadPhoto() {
+        var imageName = UUID.randomUUID().toString()
         imageUri?.let {
-            productViewModel.uploadImages(it) { success, imageName, imageUrl ->
+            productViewModel.uploadImages(imageName, it) { success, imageUrl ->
                 if (success) {
                     addProducts(imageUrl, imageName)
                 } else {
-
                 }
             }
         }

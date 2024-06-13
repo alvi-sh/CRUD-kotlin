@@ -34,8 +34,7 @@ class ProductRepositoryImpl : ProductRepository {
         }
     }
 
-    override fun uploadImages(imageUri: Uri, callback: (Boolean, String?, String?) -> Unit) {
-        var imageName = UUID.randomUUID().toString()
+    override fun uploadImages(imageName: String, imageUri: Uri, callback: (Boolean, String?) -> Unit) {
         var imageReference = storageReference.child("products").child(imageName)
 
         imageUri.let { url ->
@@ -43,10 +42,10 @@ class ProductRepositoryImpl : ProductRepository {
 
                 imageReference.downloadUrl.addOnSuccessListener { url ->
                     var imageUrl = url.toString()
-                    callback(true, imageName, imageUrl)
+                    callback(true, imageUrl)
                 }
             }.addOnFailureListener {
-                callback(false, "", "")
+                callback(false, "")
             }
         }
     }
@@ -77,14 +76,34 @@ class ProductRepositoryImpl : ProductRepository {
         data: MutableMap<String, Any>?,
         callback: (Boolean, String?) -> Unit
     ) {
-        TODO("Not yet implemented")
+        data?.let {
+            ref.child(id).updateChildren(it).addOnCompleteListener {
+                if (it.isSuccessful) {
+                    callback(true, "Data updated")
+                } else {
+                    callback(false, "Unable to update")
+                }
+            }
+        }
     }
 
     override fun deleteProducts(id: String, callback: (Boolean, String?) -> Unit) {
-        TODO("Not yet implemented")
+        ref.child(id).removeValue().addOnCompleteListener {
+            if (it.isSuccessful) {
+                callback(true, "Product deleted")
+            } else {
+                callback(false, "Unable to delete product")
+            }
+        }
     }
 
     override fun deleteImage(imageName: String, callback: (Boolean, String?) -> Unit) {
-        TODO("Not yet implemented")
+        storageReference.child("products").child(imageName).delete().addOnCompleteListener {
+            if (it.isSuccessful) {
+                callback(true, "Image Deleted")
+            } else {
+                callback(false, "Unable to delete image")
+            }
+        }
     }
 }
