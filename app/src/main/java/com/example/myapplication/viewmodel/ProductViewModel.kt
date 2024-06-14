@@ -9,6 +9,14 @@ import com.example.myapplication.repository.ProductRepository
 
 class ProductViewModel(val repository: ProductRepository) : ViewModel() {
 
+    fun deleteProducts(id: String, callback: (Boolean, String?) -> Unit) {
+        repository.deleteProducts(id, callback)
+    }
+
+    fun deleteImage(imageName: String, callback: (Boolean, String?) -> Unit) {
+        repository.deleteImage(imageName, callback)
+    }
+
     fun updateProducts(id: String, data: MutableMap<String, Any>?, callback: (Boolean, String?) -> Unit) {
         repository.updateProducts(id, data, callback)
     }

@@ -87,27 +87,11 @@ class UpdateProductActivity : AppCompatActivity() {
         imageName = product?.imageName.toString()
 
         updateProductBinding.updateButton.setOnClickListener {
-            if (imageUri == null) {
-                updateProduct(product?.url ?: "")
-            } else {
-                uploadPhoto()
-            }
+            uploadPhoto()
         }
 
         updateProductBinding.updateImageView.setOnClickListener {
-            var permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                android.Manifest.permission.READ_MEDIA_IMAGES
-            } else {
-                android.Manifest.permission.READ_EXTERNAL_STORAGE
-            }
-            if (ContextCompat.checkSelfPermission(this, permissions) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(permissions), 1)
-            } else {
-                var intent = Intent()
-                intent.type = "image/*"
-                intent.action = Intent.ACTION_GET_CONTENT
-                activityResultLauncher.launch(intent)
-            }
+            imageUtils.launchGallery(this)
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -161,6 +145,7 @@ class UpdateProductActivity : AppCompatActivity() {
             success, message ->
             if (success) {
                 Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
+                finish()
             } else {
                 Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()
             }

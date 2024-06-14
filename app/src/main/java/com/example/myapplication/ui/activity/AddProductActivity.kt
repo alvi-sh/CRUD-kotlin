@@ -21,6 +21,7 @@ import com.example.myapplication.model.ProductModel
 import com.example.myapplication.repository.ProductRepository
 import com.example.myapplication.repository.ProductRepositoryImpl
 import com.example.myapplication.utils.ImageUtils
+import com.example.myapplication.utils.LoadingUtils
 import com.example.myapplication.viewmodel.ProductViewModel
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
@@ -32,6 +33,8 @@ import java.util.UUID
 class AddProductActivity : AppCompatActivity() {
 
     lateinit var addProductBinding: ActivityAddProductBinding
+
+    lateinit var loadingUtils: LoadingUtils
 
     lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     var imageUri: Uri? = null
@@ -60,6 +63,8 @@ class AddProductActivity : AppCompatActivity() {
 
         addProductBinding = ActivityAddProductBinding.inflate(layoutInflater)
         setContentView(addProductBinding.root)
+
+        loadingUtils = LoadingUtils(this)
 
         imageUtils = ImageUtils(this)
         imageUtils.registerActivity {url ->
@@ -102,15 +107,18 @@ class AddProductActivity : AppCompatActivity() {
         productViewModel.addProducts(data) {
             success, message ->
             if (success) {
-                finish()
                 Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                finish()
+                loadingUtils.dismiss()
             } else {
                 Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                loadingUtils.dismiss()
             }
         }
     }
 
     private fun uploadPhoto() {
+        loadingUtils.showLoading()
         var imageName = UUID.randomUUID().toString()
         imageUri?.let {
             productViewModel.uploadImages(imageName, it) { success, imageUrl ->

@@ -74,6 +74,18 @@ class MainActivity : AppCompatActivity() {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 var id = productAdapter.getProductId(viewHolder.adapterPosition)
                 var imageName = productAdapter.getImageName(viewHolder.adapterPosition)
+
+                productViewModel.deleteProducts(id) {
+                    success, message ->
+                    if (success) {
+                        productViewModel.deleteImage(imageName) {
+                            success,message ->
+                        }
+                        Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                    }
+                }
             }
         }).attachToRecyclerView(mainBinding.recyclerView)
 
